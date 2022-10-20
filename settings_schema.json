@@ -1,0 +1,72 @@
+{
+  "name": "Cart",
+  "settings": [
+        {
+          "type": "checkbox",
+          "id": "shipping_bar",
+          "default": true,
+          "label": "Shipping bar"
+        },
+        {
+          "type": "text",
+          "id": "price_for_free_shippin",
+          "placeholder": "Price for free shipping",
+          "label": "Price"
+        },
+        {
+          "type": "checkbox",
+          "id": "upsell_setting",
+          "default": true,
+          "label": "Upsell"
+        },  
+        {
+          "type": "checkbox",
+          "id": "upsell_fullsize",
+          "default": true,
+          "label": "Upsell full size"
+        }, {
+          "type": "checkbox",
+          "id": "upsell_product_variants",
+          "default": true,
+          "label": "Product variants"
+        }, {
+          "type": "select",
+          "id": "upsell_format",
+          "options": [
+            {
+              "value": "outside",
+              "label": "Outside cart"
+            },
+            {
+              "value": "inside",
+              "label": "Inside Cart"
+            }
+
+          ],
+          "default": "outside",
+          "label": "Upsell type"
+        }, {
+          "type": "select",
+          "id": "upsell_variang_type",
+          "options": [
+            {
+              "value": "dropdown",
+              "label": "Dropdown"
+            },
+            {
+              "value": "buttons",
+              "label": "Buttons"
+            }
+
+          ],
+          "default": "dropdown",
+          "label": "Variant type"
+        },
+    {
+      "type": "checkbox",
+      "id": "show_cart_note",
+      "label": "Enable cart note",
+      "default": true
+    }
+  ]
+}
