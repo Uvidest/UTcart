@@ -3,23 +3,26 @@ let cart_overflow = document.getElementById("cart_items");
 let body = document.getElementsByTagName("body")[0];
 let container = document.getElementsByClassName("cart_container_drower")[0];
 let out_in_stock = document.getElementsByClassName("out_in_stock")[0];
-let string = document.querySelector("#all_variant_track").innerHTML;
 let cart_upsell = document.getElementsByClassName("upsell")[0];
+let objParse = JSON.parse(
+  document
+    .querySelector("#products_object")
+    .innerHTML.replace(/,\s+.+}$/gm, "}")
+);
 
-const handleAddToCart = (el) => {
-  let varId =
-    document.getElementById(`varId-${el.dataset.inputid}`).value ||
-    window.location.search.substr(1).split("variant=")[1];
-  let quantity =
-    document.getElementById(`product_quantity-${el.dataset.inputid}`)?.value ||
-    1;
-  let productParams = JSON.parse(string)
-    .split(varId)[1]
-    .split(",")[0]
-    .split(":")[1]
-    ?.split("}")[0];
-  let selling_state = productParams.split("-")[1].split('"')[0];
-  let availableQuantity = productParams.split("-")[0].split('"')[1];
+const handleAddToCart = (el, flag) => {
+  let varId = flag
+    ? window.location.search.substr(1).split("variant=")[1] ||
+      el.dataset.inputid
+    : el.dataset.inputid;
+  let quantity = document
+    .querySelector("#outside_overlay")
+    .classList.contains("active_drawer")
+    ? 1
+    : document.querySelector(`.quantity__input`)?.value || 1;
+
+  let selling_state = objParse[varId].split(" ")[0].split("-")[1];
+  let availableQuantity = objParse[varId].split(" ")[0].split("-")[0];
   let formData = {
     items: [
       {
@@ -62,8 +65,12 @@ const handleAddToCart = (el) => {
             ) {
               out_in_stock.innerHTML = `Available quantity on stock - ${availableQuantity}`;
               out_in_stock.style.display = "unset";
+              document.querySelector(".product_card_collection").style.height =
+                "unset";
             } else {
               addToCartRequest(formData);
+              document.querySelector(".product_card_collection").style.height =
+                "100%";
             }
           }
         }
@@ -93,6 +100,7 @@ const addToCartRequest = (formData) => {
       console.error("Error:", error);
     });
 };
+
 const getCartItems = () => {
   let upsellArr = [];
   let productsTag = [];
@@ -154,66 +162,94 @@ const updateItem = (id, qty) => {
       console.error("Error:", error);
     });
 };
+
 const drawItems = (el) => {
   cart_overflow.innerHTML = "<div></div>";
-  document.getElementById("cart_count").innerHTML = el?.item_count;
-
+  // document.getElementById("cart_count").innerHTML = el?.item_count;
   let product_item;
   if (el.item_count > 0) {
     let currencySymbol = document.querySelector("body").dataset.currencysymbol;
     let shipping_bar_id = document.getElementById("shipping_bar_id");
-
+    let shipping_bar_container = document.getElementById(
+      "shipping_bar_container"
+    );
     let need_to_pay = document.getElementById("need_to_pay");
     let shipping_title = document.getElementById("shipping_title");
 
     document.getElementById("cart_footer").style.display = "unset";
     document.getElementById("total_checkout_price").innerHTML =
-      currencySymbol + " " + (el?.total_price / 100).toFixed(2);
+      (el?.total_price / 100).toFixed(2) + " " + currencySymbol;
     +" " + el?.currency;
     cart_upsell.style.display = "unset";
-    cart_upsell.style.filter = "none";
-
     shipping_bar_id.style.display = "flex";
+    shipping_bar_container.style.display = "block";
     return el?.items.map((data) => {
-      let productParams = JSON.parse(string)
-        .split(data.variant_id)[1]
-        .split(",")[0]
-        .split(":")[1]
-        .split("}")[0];
-      let productCap = productParams.split("cap=")[1];
-      let availableQuantity = productParams.split("-")[0].split('"')[1];
-      let selling_state = productParams.split("-")[1].split('"')[0];
+      let productCap = objParse[data.variant_id].split(" ")[1].split("=")[1];
+      let selling_state = objParse[data.variant_id].split(" ")[0].split("-")[1];
+      let availableQuantity = objParse[data.variant_id]
+        .split(" ")[0]
+        .split("-")[0];
       product_item = document.createElement("div").innerHTML = `
-      <div class="cart_item">
-      <div class="item--loadbar" id="loaderId-${data.variant_id}">
-        <div class="loaderCart">&nbsp;</div>
-      </div>
-
-      <div class="image"> 
-          <img 
+      <div class="cart_item" data-carttitle=${data.product_title}>
+        <div class="item--loadbar" id="loaderId-${data.variant_id}">
+          <div class="loaderCart">&nbsp;</div>
+        </div>
+<div class="item_wrapper">
+      <div class="info_box">  
+        <div class="image"> 
+        <a href=${data.url}>
+        ${
+          data.featured_image.url
+            ? `<img 
             src=${data.featured_image.url}
             alt=${data.featured_image.alt}
             loading="lazy"
-          >
- 
+          >`
+            : ``
+        }
+          </a>
+        </div>
+        <div class="info_item_title"> 
+          <a href=${data.url}>${data.product_title}</a>
+
+        </div>     
       </div>
-      <div class="info_drawer">
-        <div>
-          <div class="info_item"> 
-            <a href=${data.url}>${data.product_title}</a>
-          </div>
-          <div class="info_item">          
-                <div>${
-                  currencySymbol + (data.price / 100).toFixed(2)
-                }</div>           
+   
+
+
+<div class="item_actions_wrapper">
+
+
+<div class="upsell_price_wrapper_UT"> 
+<div class="upsell_cap_price_UT" id=cap_price-${data.variant_id}> 
+ ${
+   !isNaN(productCap) && +productCap
+     ? ((+productCap / 100) * data.quantity).toFixed(2) + currencySymbol
+     : ""
+ }
+</div>
+
+ <div class="upsell_price_UT">   
+ <strong class='final_price'>${
+   (data.final_line_price / 100).toFixed(2) + currencySymbol
+ }</strong>     
+  </div>
+</div>
+
+      <div class="info_drawer cart_info_drawer">
+  
+              <div class="actions">
+              <div class="remoove">
+              <cart-remove-button>
+                <button class="remoove_button" onclick="updateItem(${
+                  data.variant_id
+                },0)">
+                <svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14.3265 3.42857H11.3878V2.81633V2.32653C11.3878 0 10.2857 0 9.18367 0C8.08163 0 7.95918 0 5.7551 0C3.55102 0 3.42857 1.10204 3.42857 2.32653C3.42857 2.81633 3.42857 2.81633 3.42857 2.81633V3.42857H0.612245C0.244898 3.42857 0 3.67347 0 4.04082V5.14286C0 5.5102 0.244898 5.7551 0.612245 5.7551C0.979592 5.7551 1.22449 6 1.22449 6.36735V17.3878C1.22449 17.7551 1.46939 18 1.83673 18H13.3469C13.7143 18 13.9592 17.7551 13.9592 17.3878V6.36735C13.9592 6 14.2041 5.7551 14.5714 5.7551C14.9388 5.7551 15.1837 5.5102 15.1837 5.14286V4.04082C14.9388 3.67347 14.6939 3.42857 14.3265 3.42857ZM4.77551 1.46939H9.91837V3.55102H4.77551V1.46939ZM12.2449 15.4286C12.2449 15.9184 11.8776 16.2857 11.3878 16.2857H3.55102C3.06122 16.2857 2.69388 15.9184 2.69388 15.4286V6.61225C2.69388 6.12245 3.06122 5.7551 3.55102 5.7551H11.5102C12 5.7551 12.3673 6.12245 12.3673 6.61225V15.4286H12.2449Z" fill="#444444"/>
+                </svg>
+                </button>
+              </cart-remove-button>
            </div>
-          <div class="info_item options_product">
-              ${data.options_with_values?.map(
-                ({ name, value }) => `<div>${name + ":" + value}</div>`
-              )}        
-          </div>
-          <div class="actions_drawer">
-          <div>
                 <quantity-input class="quantity_selector qty_sel">
                   <button onclick="updateItem(${data.variant_id},${
         data.quantity - 1
@@ -224,8 +260,8 @@ const drawItems = (el) => {
                     - 
                     </button>
                     <input
-                    class='quantity_input'
-                    type="number"
+                    class='quantity_input_drawer'
+                    type="text"
                     name="updates[]"
                     readonly='false'
                     value=${data.quantity}
@@ -234,52 +270,30 @@ const drawItems = (el) => {
                   />
                   <button onclick="updateItem(${data.variant_id},${
         data.quantity + 1
-      })" id='quantity_plus-${
-        data.variant_id
-      }' class="no-js-hidden" name="plus" type="button">
+      })"
+                   id='quantity_plus-${data.variant_id}'
+                   class="no-js-hidden"
+                   name="plus"
+                   type="button">
                     <span class="visually-hidden"></span>
                       +
                     </button>
                 </quantity-input>
-                </div>
-            <div class="remoove">
-              <cart-remove-button>
-                <button class="remoove_button" onclick="updateItem(${
-                  data.variant_id
-                },0)">
-                Remove
-                </button>
-              </cart-remove-button>
-            </div>
-          </div>
-      
-
-          
+           
         </div>
-
-
-        <div class="upsell_price_wrapper_UT"> 
-        <div class="upsell_cap_price_UT">   
-         ${currencySymbol + (+productCap / 100).toFixed(2)}
-        </div>
-        
-         <div class="upsell_price_UT">   
-         ${data.original_price / 100 !== data.final_price? `
-         <div>
-           <div>
-            <strong class='final_price'>${
-              currencySymbol + data.final_line_price.toFixed(2) / 100
-            }</strong>
-            </div>
-         </div>`
-             : ""}
-          </div>
-        </div>
-
-      
+      </div>  
       </div>
-      
-      </div>`;
+      </div>
+    </div>
+    <span class='available_qty'>
+    ${
+      +data.quantity === +availableQuantity
+        ? `You can only add ${availableQuantity} of this item to your cart`
+        : ""
+    }
+    </span> 
+    `;
+
       cart_overflow.innerHTML += product_item;
       if (selling_state === "deny") {
         if (+data.quantity == +availableQuantity) {
@@ -292,27 +306,28 @@ const drawItems = (el) => {
         shipping_bar_id.value = el.total_price.toFixed(2) / 100;
 
         need_to_pay.innerHTML =
-          currencySymbol +
-          (shipping_bar_id.max - el.total_price.toFixed(2) / 100).toFixed(2);
+          "Add " +
+          (shipping_bar_id.max - el.total_price.toFixed(2) / 100).toFixed(2) +
+          currencySymbol;
 
-        shipping_title.innerHTML = "For get free shipping!";
+        shipping_title.innerHTML = "to have Free Shipping";
       } else {
         shipping_bar_id.value = el.total_price.toFixed(2) / 100;
         shipping_title.innerHTML =
-          "Congratulations! Your order qualifies for free shipping";
+          "Congratulations! You already have <strong>Free Shipping</strong>";
         need_to_pay.innerHTML = "";
       }
     });
   } else {
     cart_upsell.style.display = "none";
     shipping_bar_id.style.display = "none";
-
+    shipping_bar_container.style.display = "none";
     product_item = document.createElement("div").innerHTML = `
-      <div class='empty_cart_box'>
+      <div class='empty_cart_box checkout_button'>
         <h2 class='empty_title'>Your cart is empty</h2>
-          <a href='/collections/all' class="footer_button_checkout" id="CartDrawer-Checkout">
+        <a class='footer_button_checkout' href='collections/all'>
            Continue shopping
-          </a>
+        </a>
       </div>`;
     document.getElementById("cart_footer").style.display = "none";
     cart_overflow.innerHTML += product_item;
@@ -320,9 +335,14 @@ const drawItems = (el) => {
 };
 const openCart = () => {
   getCartItems();
+  // handleChangeDiscoutnPosition();
   drawer_cart.classList.add("active_drawer");
   body.classList.add("overflow-hidden");
   drawer_cart.style.display = "flex";
+
+  // if (document.querySelector("#code").value) {
+  //   document.querySelector("#submit").click();
+  // }
 
   setTimeout(() => {
     container.style.transform = "translate(0%)";
@@ -367,21 +387,24 @@ const changeUpsellVariant = (el) => {
   for (let i = 0; i < productObj.length; i++) {
     if (variantTitle == productObj[i].title) {
       document.getElementById(`varId-${el.id}`).value = productObj[i].id;
-      console.log(productObj[i]);
       if (productObj[i].featured_image) {
         el.closest(".product_item").querySelector(".upsell_img").src =
           productObj[i].featured_image.src;
       }
 
       el.closest(".product_item").querySelector(".upsell_price_UT").innerHTML =
-        currencySymbol + (productObj[i].price / 100).toFixed(2);
-        el.closest(".product_item").querySelector(".upsell_cap_price_UT").innerHTML =
-        currencySymbol + (productObj[i].compare_at_price / 100).toFixed(2);
+        (productObj[i].price / 100).toFixed(2) + currencySymbol;
 
-        
+      el
+        .closest(".product_item")
+        .querySelector(".upsell_cap_price_UT").innerHTML =
+        +productObj[i].compare_at_price > 0
+          ? (productObj[i].compare_at_price / 100).toFixed(2) + currencySymbol
+          : "";
     }
   }
 };
+
 const drawUpsell = (el) => {
   let upsell_wrapper = document.getElementById("upsell_wrapper");
   let upsellId = [];
@@ -390,7 +413,7 @@ const drawUpsell = (el) => {
   let cartItems = [];
   let htmlEl = [];
   let upsellUniqItems = [];
-  cart_upsell.style.filter = "blur(3px)";
+  cart_upsell.style.display = "none";
   function handleResponse() {
     let divEl = document.createElement("div");
     divEl.innerHTML = this.responseText;
@@ -448,7 +471,7 @@ const drawUpsell = (el) => {
       cart_upsell.style.display = "unset";
     }
 
-    cart_upsell.style.filter = "unset";
+    cart_upsell.style.display = "unset";
   }
   // get upsell products and call draw function
   const request = new XMLHttpRequest();
@@ -456,10 +479,11 @@ const drawUpsell = (el) => {
   request.open("GET", "/?snippets=UTcart", true);
   request.send();
 };
+
 const findProductByHandle = (el, upsellArr, productsTag) => {
   let productsWithTags = [];
   el.items.map(({ handle }) => {
-    fetch(`https://developmentshin.myshopify.com/products/${handle}.js`, {
+    fetch(window.Shopify.routes.root + `products/${handle}.js`, {
       headers: {
         "Content-Type": "application/json",
       },
@@ -478,6 +502,7 @@ const findProductByHandle = (el, upsellArr, productsTag) => {
     findUpsellProductByHandle(productsWithTags, upsellArr, productsTag);
   }, 400);
 };
+
 const findUpsellProductByHandle = (product, upsellArr, productsTag) => {
   product.map(({ tags }) => {
     tags.map((tag) => {
@@ -497,19 +522,14 @@ const findUpsellProductByHandle = (product, upsellArr, productsTag) => {
     }
   });
 };
+
 const removeUnusedUpsellProduct = (handle) => {
   if (handle?.includes("upsell"))
-    fetch(
-      `https://developmentshin.myshopify.com/products/${handle.replace(
-        "-upsell",
-        ""
-      )}.js`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    )
+    fetch(window.Shopify.routes.root + `products/${handle}.js`, {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
       .then((response) => {
         return response.json();
       })
@@ -526,3 +546,29 @@ const removeUnusedUpsellProduct = (handle) => {
         console.error("Error:", error);
       });
 };
+
+// let isDropdownActive = document.querySelector(
+//   ".icart-coupon-code-svg.icart-add-coupon-code.isActive"
+// );
+
+// let discountInfo = document.querySelector(".sc_simple-info__row.sc_code-info");
+// const handleChangeDiscoutnPosition = () => {
+//   let infoInterval = setInterval(() => {
+//     if (discountInfo) {
+//       console.log("find info");
+
+//       clearInterval(infoInterval);
+//       document.querySelector(".discount_price_UT").appendChild(discountInfo);
+
+//       document
+//         .querySelector(".sc_code-btn")
+//         .addEventListener("click", function () {
+//           handleChangeDiscoutnPosition;
+//         });
+//     } else {
+//       discountInfo = document.querySelector(
+//         ".sc_simple-info__row.sc_code-info"
+//       );
+//     }
+//   }, 500);
+// };
