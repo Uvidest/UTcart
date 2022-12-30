@@ -92,7 +92,7 @@ const updateItem = (el) => {
     let productsTag = [];
 
     if (+qty > +avabilityQty) {
-      qty = qty+ - 1;
+      qty = qty + -1;
       setTimeout(() => {
         document.querySelector(
           `.out_in_stock_in_cart-${id}.out_in_stock_hidden`
@@ -492,7 +492,13 @@ const removeUnusedUpsellProduct = (handle) => {
         product.variants.map((data) => {
           document.querySelectorAll(".item--loadbar").forEach((el) => {
             if (data.id === +el.id.split("-")[1]) {
-              updateItem(data.id, 0);
+              updateItem({
+                dataset: {
+                  prodid: data.id,
+                  prodqty: 0,
+                  prodhandle: handle,
+                },
+              });
             }
           });
         });
@@ -527,19 +533,6 @@ const removeUnusedUpsellProduct = (handle) => {
 //     }
 //   }, 500);
 // };
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // let drawer_cart = document.getElementsByClassName("cart_wrapper")[0];
 // let cart_overflow = document.getElementById("cart_items");
@@ -732,28 +725,28 @@ const removeUnusedUpsellProduct = (handle) => {
 //         <div class="loaderCart">&nbsp;</div>
 //       </div>
 
-//       <div class="image"> 
-//           <img 
+//       <div class="image">
+//           <img
 //             src=${data.featured_image.url}
 //             alt=${data.featured_image.alt}
 //             loading="lazy"
 //           >
- 
+
 //       </div>
 //       <div class="info_drawer">
 //         <div>
-//           <div class="info_item"> 
+//           <div class="info_item">
 //             <a href=${data.url}>${data.product_title}</a>
 //           </div>
-//           <div class="info_item">          
+//           <div class="info_item">
 //                 <div>${
 //                   currencySymbol + (data.price / 100).toFixed(2)
-//                 }</div>           
+//                 }</div>
 //            </div>
 //           <div class="info_item options_product">
 //               ${data.options_with_values?.map(
 //                 ({ name, value }) => `<div>${name + ":" + value}</div>`
-//               )}        
+//               )}
 //           </div>
 //           <div class="actions_drawer">
 //           <div>
@@ -764,7 +757,7 @@ const removeUnusedUpsellProduct = (handle) => {
 //         data.variant_id
 //       }' class="no-js-hidden" name="minus" type="button">
 //                     <span></span>
-//                     - 
+//                     -
 //                     </button>
 //                     <input
 //                     class='quantity_input'
@@ -795,18 +788,15 @@ const removeUnusedUpsellProduct = (handle) => {
 //               </cart-remove-button>
 //             </div>
 //           </div>
-      
 
-          
 //         </div>
 
-
-//         <div class="upsell_price_wrapper_UT"> 
-//         <div class="upsell_cap_price_UT">   
+//         <div class="upsell_price_wrapper_UT">
+//         <div class="upsell_cap_price_UT">
 //          ${currencySymbol + (+productCap / 100).toFixed(2)}
 //         </div>
-        
-//          <div class="upsell_price_UT">   
+
+//          <div class="upsell_price_UT">
 //          ${data.original_price / 100 !== data.final_price? `
 //          <div>
 //            <div>
@@ -819,9 +809,8 @@ const removeUnusedUpsellProduct = (handle) => {
 //           </div>
 //         </div>
 
-      
 //       </div>
-      
+
 //       </div>`;
 //       cart_overflow.innerHTML += product_item;
 //       if (selling_state === "deny") {
@@ -921,7 +910,6 @@ const removeUnusedUpsellProduct = (handle) => {
 //         el.closest(".product_item").querySelector(".upsell_cap_price_UT").innerHTML =
 //         currencySymbol + (productObj[i].compare_at_price / 100).toFixed(2);
 
-        
 //     }
 //   }
 // };
